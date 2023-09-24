@@ -10,5 +10,7 @@ out vec4 Color;
 uniform sampler2D markup;
 
 void main() {
-    Color = texture(markup, IN.TextureCoords);
+    vec4 color = texture(markup, IN.TextureCoords);
+    color.b = 1 - color.b;
+    Color = color;
 }

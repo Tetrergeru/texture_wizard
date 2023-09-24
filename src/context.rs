@@ -13,15 +13,18 @@ use crate::{
 pub struct Ctx {
     pub textures: HashMap<String, Texture>,
     pub shaders: HashMap<String, ShaderProgram>,
+    pub default_shader: ShaderProgram,
 }
 
 const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
+const DEFAULT_FRAGMENT_SHADER: &str = include_str!("shaders/default.frag");
 
 impl Ctx {
     pub fn new(pipe: &pipeline::Pipeline, dir: &str) -> Result<Self> {
         let mut ctx = Self {
             textures: HashMap::new(),
             shaders: HashMap::new(),
+            default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
         };
 
         let mut results = HashSet::new();

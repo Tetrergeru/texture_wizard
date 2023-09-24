@@ -1,21 +1,22 @@
 pipeline:
-#   - shader: shader_1.frag
-#     inputs:
-#       - type: file
-#         name: markup.png
-#         uniform: markup
-#     output:
-#       type: memory
-#       name: noise_1 
-#       width: 64
-#       height: 64
-  - shader: shader_2.frag
+  - shader: shader_1.frag
     inputs:
       - type: file
         name: markup.png
+        uniform: markup
+    output:
+      type: memory
+      name: noise_1 
+      width: 64
+      height: 64
+  - shader: shader_2.frag
+    inputs:
+      - type: memory
+        name: noise_1
         uniform: noise
     output:
       type: file
-      name: result.png
+      name: out/result.png
       width: 64
       height: 64
+      preview: simple

@@ -10,5 +10,7 @@ out vec4 Color;
 uniform sampler2D noise;
 
 void main() {
-    Color = texture(noise, IN.TextureCoords);
+    vec4 color = texture(noise, IN.TextureCoords);
+    color.g = color.g / 2;
+    Color = color;
 }
