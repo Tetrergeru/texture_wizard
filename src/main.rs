@@ -1,11 +1,14 @@
 #![allow(clippy::single_match)]
 
+use crate::preprocessor::Preproseccor;
+
 pub mod context;
 pub mod executor;
 pub mod mesh;
 pub mod pipeline;
 pub mod shader;
 pub mod texture;
+pub mod preprocessor;
 
 fn main() {
     let pipe = pipeline::Pipeline::load_from_file("examples/project.tw.yaml").unwrap();

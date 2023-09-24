@@ -9,7 +9,6 @@ pipeline:
       name: noise_1 
       width: 64
       height: 64
-      preview: simple
   - shader: shader_2.frag
     inputs:
       - type: memory
@@ -20,4 +19,3 @@ pipeline:
       name: out/result.png
       width: 64
       height: 64
-      preview: simple
