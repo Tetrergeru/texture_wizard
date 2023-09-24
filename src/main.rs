@@ -3,6 +3,7 @@
 pub mod context;
 pub mod pipeline;
 pub mod shader;
+pub mod texture;
 
 fn main() {
     let width = 500_usize;
@@ -26,7 +27,7 @@ fn main() {
     println!("pipe = {pipe:?}");
     println!(
         "ctx.images.len() = {}, ctx.shaders.len() = {}",
-        ctx.images.len(),
+        ctx.textures.len(),
         ctx.shaders.len()
     );
 

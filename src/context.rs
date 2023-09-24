@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Result};
-use image::RgbaImage;
 use std::{
     collections::{HashMap, HashSet},
     fs,
@@ -8,10 +7,11 @@ use std::{
 use crate::{
     pipeline::{self, IOType},
     shader::ShaderProgram,
+    texture::Texture,
 };
 
 pub struct Ctx {
-    pub images: HashMap<String, RgbaImage>,
+    pub textures: HashMap<String, Texture>,
     pub shaders: HashMap<String, ShaderProgram>,
 }
 
@@ -20,7 +20,7 @@ const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
 impl Ctx {
     pub fn new(pipe: &pipeline::Pipeline, dir: &str) -> Result<Self> {
         let mut ctx = Self {
-            images: HashMap::new(),
+            textures: HashMap::new(),
             shaders: HashMap::new(),
         };
 
@@ -65,14 +65,12 @@ impl Ctx {
     }
 
     fn load_image(&mut self, fname: &str) -> Result<()> {
-        if self.images.contains_key(fname) {
+        if self.textures.contains_key(fname) {
             return Ok(());
         }
 
-        let image = image::open(fname)
-            .with_context(|| format!("Failed to read image from '{}'", fname))?
-            .into_rgba8();
-        self.images.insert(fname.to_string(), image);
+        let texture = Texture::from_file(fname)?;
+        self.textures.insert(fname.to_string(), texture);
 
         Ok(())
     }
