@@ -10,10 +10,10 @@ pipeline:
 #       width: 64
 #       height: 64
   - shader: shader_2.frag
-    inputs: []
-      # - type: file
-      #   name: markup.png
-      #   uniform: noise
+    inputs:
+      - type: file
+        name: markup.png
+        uniform: noise
     output:
       type: file
       name: result.png

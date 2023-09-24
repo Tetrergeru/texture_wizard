@@ -7,8 +7,8 @@ in VS_OUTPUT {
 
 out vec4 Color;
 
-// uniform sampler2D noise;
+uniform sampler2D noise;
 
 void main() {
-    Color = vec4(IN.TextureCoords, 0.0f, 1.0f); //texture(noise, IN.TextureCoords);
+    Color = texture(noise, IN.TextureCoords);
 }
