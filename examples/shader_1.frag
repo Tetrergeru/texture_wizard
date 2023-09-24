@@ -6,6 +6,8 @@ in VS_OUTPUT {
 
 out vec4 Color;
 
+uniform sampler2D markup;
+
 void main() {
-    Color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    Color = texture(markup, IN.TextureCoords);
 }

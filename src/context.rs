@@ -27,11 +27,11 @@ impl Ctx {
         let mut results = HashSet::new();
 
         for stage in pipe.pipeline.iter() {
-            ctx.load_shader(&format!("{dir}/{}", stage.shader))?;
+            ctx.load_shader(&format!("{dir}/{}", stage.shader), &stage.shader)?;
 
             for input in stage.inputs.iter() {
                 match input.typ {
-                    IOType::File => ctx.load_image(&format!("{dir}/{}", input.name))?,
+                    IOType::File => ctx.load_image(&format!("{dir}/{}", input.name), &input.name)?,
                     IOType::Memory => {
                         if !results.contains(&input.name) {
                             return Err(anyhow!("Unknown resource in input: {}", input.name));
@@ -51,12 +51,12 @@ impl Ctx {
         Ok(ctx)
     }
 
-    fn load_shader(&mut self, fname: &str) -> Result<()> {
+    fn load_shader(&mut self, fname: &str, name: &str) -> Result<()> {
         let shader = fs::read_to_string(fname)
             .with_context(|| format!("Failed to read shader from '{}'", fname))?;
 
         self.shaders.insert(
-            fname.to_string(),
+            name.to_string(),
             ShaderProgram::new(DEFAULT_VERTEX_SHADER, &shader)
                 .with_context(|| format!("Failed to create shader program: {fname}"))?,
         );
@@ -64,13 +64,13 @@ impl Ctx {
         Ok(())
     }
 
-    fn load_image(&mut self, fname: &str) -> Result<()> {
+    fn load_image(&mut self, fname: &str, name: &str) -> Result<()> {
         if self.textures.contains_key(fname) {
             return Ok(());
         }
 
         let texture = Texture::from_file(fname)?;
-        self.textures.insert(fname.to_string(), texture);
+        self.textures.insert(name.to_string(), texture);
 
         Ok(())
     }

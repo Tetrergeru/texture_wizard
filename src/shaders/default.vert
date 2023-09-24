@@ -1,7 +1,7 @@
 #version 330 core
 
 layout (location = 0) in vec3 Position;
-layout (location = 2) in vec2 TextureCoords;
+layout (location = 1) in vec2 TextureCoords;
 
 out VS_OUTPUT {
     vec2 TextureCoords;

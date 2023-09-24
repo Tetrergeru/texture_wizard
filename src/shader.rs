@@ -3,10 +3,11 @@ use std::ffi::CString;
 use anyhow::{anyhow, Context, Ok, Result};
 use gl::types::{GLchar, GLenum, GLint, GLuint};
 
+#[derive(Debug)]
 pub struct ShaderProgram {
     frag_shader: GLuint,
     vert_shader: GLuint,
-    program_id: GLuint,
+    pub program_id: GLuint,
 }
 
 impl ShaderProgram {
@@ -24,6 +25,49 @@ impl ShaderProgram {
             program_id,
         };
         Ok(program)
+    }
+
+    pub fn bind(&self) {
+        unsafe {
+            gl::UseProgram(self.program_id);
+        }
+    }
+
+    pub fn uniform_1i(&self, name: &str, value: i32) -> Result<()> {
+        let uniform_id = self.get_uniform_location(name)?;
+
+        unsafe {
+            gl::UseProgram(self.program_id);
+            gl::Uniform1i(uniform_id, value);
+        }
+
+        Ok(())
+    }
+
+    pub fn get_uniform_location(&self, name: &str) -> Result<i32> {
+        let c_name = std::ffi::CString::new(name).unwrap();
+        let uniform_id = unsafe {
+            gl::GetUniformLocation(self.program_id, c_name.as_ptr() as *const gl::types::GLchar)
+        };
+
+        if uniform_id == -1 {
+            return Err(anyhow!("Could not find uniform {} in program", name));
+        }
+
+        Ok(uniform_id)
+    }
+
+    pub fn get_attrib_location(&self, name: &str) -> Result<i32> {
+        let c_name = std::ffi::CString::new(name).unwrap();
+        let uniform_id = unsafe {
+            gl::GetAttribLocation(self.program_id, c_name.as_ptr() as *const gl::types::GLchar)
+        };
+
+        if uniform_id == -1 {
+            return Err(anyhow!("Could not find attrib {} in program", name));
+        }
+
+        Ok(uniform_id)
     }
 
     fn create_program(frag_shader: GLuint, vert_shader: GLuint) -> Result<GLuint> {

@@ -35,6 +35,8 @@ pub struct Output {
     #[serde(rename = "type")]
     pub typ: IOType,
     pub name: String,
+    pub width: u32,
+    pub height: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
