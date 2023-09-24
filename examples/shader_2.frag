@@ -2,6 +2,7 @@
 
 in VS_OUTPUT {
     vec2 TextureCoords;
+    vec3 Position;
 } IN;
 
 out vec4 Color;

@@ -29,7 +29,7 @@ impl Texture {
 
         let mut id = 0;
         unsafe {
-            gl::GenTextures(1, &mut id);
+            gl::CreateTextures(gl::TEXTURE_2D, 1, &mut id);
             gl::BindTexture(gl::TEXTURE_2D, id);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
@@ -46,8 +46,11 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 image.as_mut_ptr() as *mut c_void,
             );
-            gl::GenerateMipmap(gl::TEXTURE_2D);
-            gl::BindTexture(gl::TEXTURE_2D, 0);
+
+            // let err = gl::GetError();
+            // println!("write err = {err}");
+
+            // gl::GenerateMipmap(gl::TEXTURE_2D);
             gl::BindTexture(gl::TEXTURE_2D, 0);
         }
 
@@ -77,6 +80,9 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 self.image.as_ptr() as *mut c_void,
             );
+            
+            // let err = gl::GetError();
+            // println!("read err = {err}");
         }
         self.image.save(fname)?;
         Ok(())

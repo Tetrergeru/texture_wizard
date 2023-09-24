@@ -24,25 +24,25 @@ fn execute_stage(ctx: &mut Ctx, stage: &Stage, dir: &str) -> Result<()> {
     });
     shader.bind();
 
-    println!("attrib = {}", shader.get_attrib_location("Position")?);
+    // println!("attrib = {}", shader.get_attrib_location("Position")?);
 
     let mesh = Mesh::default_plain();
 
     let texture = Texture::from_size(stage.output.width, stage.output.height)?;
     // if let IOType::Memory = stage.output.typ {
-    let mut framebuffer: u32 = 0;
-    unsafe {
-        gl::CreateFramebuffers(1, &mut framebuffer);
-        gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
-        gl::FramebufferTexture2D(
-            gl::FRAMEBUFFER,
-            gl::COLOR_ATTACHMENT0,
-            gl::TEXTURE_2D,
-            texture.get_id(),
-            0,
-        );
-        gl::Viewport(0, 0, stage.output.width as i32, stage.output.height as i32);
-    };
+    // let mut framebuffer: u32 = 0;
+    // unsafe {
+    //     gl::CreateFramebuffers(1, &mut framebuffer);
+    //     gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
+    //     gl::FramebufferTexture2D(
+    //         gl::FRAMEBUFFER,
+    //         gl::COLOR_ATTACHMENT0,
+    //         gl::TEXTURE_2D,
+    //         texture.get_id(),
+    //         0,
+    //     );
+    //     gl::Viewport(0, 0, stage.output.width as i32, stage.output.height as i32);
+    // };
     // }
 
     for (idx, input) in stage.inputs.iter().enumerate() {
@@ -51,10 +51,14 @@ fn execute_stage(ctx: &mut Ctx, stage: &Stage, dir: &str) -> Result<()> {
         shader.uniform_1i(&input.uniform, idx as i32)?;
     }
 
+    unsafe {
+        gl::Viewport(0, 0, 500, 500);
+    }
+
     mesh.draw();
 
     match stage.output.typ {
-        IOType::File => texture.save_to_file(&format!("{dir}/{}", stage.output.name))?,
+        IOType::File => (),// texture.save_to_file(&format!("{dir}/{}", stage.output.name))?,
         IOType::Memory => {
             ctx.textures.insert(stage.output.name.clone(), texture);
         }

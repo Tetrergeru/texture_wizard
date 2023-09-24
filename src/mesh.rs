@@ -39,7 +39,6 @@ impl Mesh {
         self.vao.bind();
 
         unsafe {
-            gl::Viewport(0, 0, 500, 500);
             gl::DrawArrays(gl::TRIANGLES, 0, self.vertex_count as i32);
         }
     }

@@ -70,6 +70,7 @@ impl Ctx {
         }
 
         let texture = Texture::from_file(fname)?;
+        // texture.save_to_file(&format!("{name}.png"))?;
         self.textures.insert(name.to_string(), texture);
 
         Ok(())
