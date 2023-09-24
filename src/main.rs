@@ -35,22 +35,22 @@ fn main() {
 
     executor::execute_pipeline(&pipe, "examples").unwrap();
 
-    let mut event_pump = sdl.event_pump().unwrap();
-    loop {
-        for event in event_pump.poll_iter() {
-            match event {
-                sdl2::event::Event::Quit { .. } => return,
-                _ => (),
-            }
-        }
+    // let mut event_pump = sdl.event_pump().unwrap();
+    // loop {
+    //     for event in event_pump.poll_iter() {
+    //         match event {
+    //             sdl2::event::Event::Quit { .. } => return,
+    //             _ => (),
+    //         }
+    //     }
 
-        unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
-        }
+    //     unsafe {
+    //         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+    //         // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
+    //     }
 
-        executor::execute_pipeline(&pipe, "examples").unwrap();
+    //     executor::execute_pipeline(&pipe, "examples").unwrap();
 
-        window.gl_swap_window();
-    }
+    //     window.gl_swap_window();
+    // }
 }
