@@ -1,13 +1,21 @@
 use anyhow::{anyhow, Context, Result};
 use image::RgbaImage;
-use std::{collections::{HashMap, HashSet}, fs};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
-use crate::pipeline::{self, IOType};
+use crate::{
+    pipeline::{self, IOType},
+    shader::ShaderProgram,
+};
 
 pub struct Ctx {
     pub images: HashMap<String, RgbaImage>,
-    pub shaders: HashMap<String, String>,
+    pub shaders: HashMap<String, ShaderProgram>,
 }
+
+const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
 
 impl Ctx {
     pub fn new(pipe: &pipeline::Pipeline, dir: &str) -> Result<Self> {
@@ -28,17 +36,16 @@ impl Ctx {
                         if !results.contains(&input.name) {
                             return Err(anyhow!("Unknown resource in input: {}", input.name));
                         }
-                    },
+                    }
                 }
             }
 
             match stage.output.typ {
                 IOType::Memory => {
                     results.insert(stage.output.name.clone());
-                },
+                }
                 IOType::File => (),
             }
-            
         }
 
         Ok(ctx)
@@ -48,7 +55,11 @@ impl Ctx {
         let shader = fs::read_to_string(fname)
             .with_context(|| format!("Failed to read shader from '{}'", fname))?;
 
-        self.shaders.insert(fname.to_string(), shader);
+        self.shaders.insert(
+            fname.to_string(),
+            ShaderProgram::new(DEFAULT_VERTEX_SHADER, &shader)
+                .with_context(|| format!("Failed to create shader program: {fname}"))?,
+        );
 
         Ok(())
     }
