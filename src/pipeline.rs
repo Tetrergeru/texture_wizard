@@ -42,5 +42,5 @@ pub enum IOType {
     #[serde(rename = "file")]
     File,
     #[serde(rename = "memory")]
-    Memory
+    Memory,
 }
