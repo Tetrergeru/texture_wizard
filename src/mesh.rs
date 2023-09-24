@@ -10,7 +10,15 @@ impl Mesh {
     pub fn default_plain() -> Self {
         let vao = Vao::new();
 
-        let positions = Vbo::new(&vec![
+        let fake_positions = Vbo::new(&vec![
+            -1.0, -1.0, 0.0, //
+            1.0, -1.0, 0.0, //
+            -1.0, 1.0, 0.0, //
+            -1.0, 1.0, 0.0, //
+            1.0, -1.0, 0.0, //
+            1.0, 1.0, 0.0, //
+        ]);
+        let real_positions = Vbo::new(&vec![
             -1.0, -1.0, 0.0, //
             1.0, -1.0, 0.0, //
             -1.0, 1.0, 0.0, //
@@ -26,10 +34,11 @@ impl Mesh {
             1.0, 0.0, //
             1.0, 1.0, //
         ]);
-        vao.attach_vbo(&positions, 0, 3);
-        vao.attach_vbo(&uvs, 1, 2);
+        vao.attach_vbo(&real_positions, 0, 3);
+        vao.attach_vbo(&fake_positions, 1, 3);
+        vao.attach_vbo(&uvs, 2, 2);
         Self {
-            _vbo: vec![positions, uvs],
+            _vbo: vec![fake_positions, real_positions, uvs],
             vao,
             vertex_count: 6,
         }
