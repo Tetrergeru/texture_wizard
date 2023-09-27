@@ -17,5 +17,6 @@ pipeline:
     output:
       type: file
       name: out/result.png
-      width: 512
-      height: 512
+      width: 200
+      height: 200
+      # preview: simple

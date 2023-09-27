@@ -6,6 +6,6 @@ float u_random(int hash) {
     return mod(abs(hash), RANDOM_MOD) / RANDOM_MOD;
 }
 
-float i_random(int hash) {
+float s_random(int hash) {
     return mod(hash, RANDOM_MOD) / RANDOM_MOD;
 }

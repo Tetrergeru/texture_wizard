@@ -9,6 +9,8 @@ pub fn preprocess_shader(name: &str) -> Result<String> {
     
     let src = p.load_sorce(name)?.to_owned();
 
+    // fs::write("examples/out/debug.glsl", &src)?;
+
     Ok(src)
 }
 
@@ -60,8 +62,9 @@ impl Preproseccor {
     }
 
     fn load_sorce(&mut self, name: &str) -> Result<&'_ str> {
+
         if self.processed.contains_key(name) {
-            return Ok(&self.processed[name]);
+            return Ok("");
         }
 
         let processed = if STANDARD_SHADERS.contains_key(name) {
