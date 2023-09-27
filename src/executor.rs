@@ -2,7 +2,6 @@ use anyhow::Result;
 
 use crate::{
     context::Ctx,
-    mesh::Mesh,
     pipeline::{IOType, Pipeline, Preview, Stage},
     texture::Texture,
 };
@@ -30,30 +29,11 @@ struct Executor {
 
 impl Executor {
     fn execute_stage(&mut self, stage: &Stage) -> Result<()> {
-        let shader = self.ctx.shaders.get(&stage.shader).unwrap_or_else(|| {
-            panic!(
-                "unexpected shader name {}, all shaders: {:?}",
-                stage.shader, self.ctx.shaders
-            )
-        });
-        shader.bind();
-
-        let mesh = Mesh::default_plain();
-
         let texture = Texture::from_size(stage.output.width, stage.output.height)?;
-        let mut framebuffer: u32 = 0;
-        unsafe {
-            gl::CreateFramebuffers(1, &mut framebuffer);
-            gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
-            gl::FramebufferTexture2D(
-                gl::FRAMEBUFFER,
-                gl::COLOR_ATTACHMENT0,
-                gl::TEXTURE_2D,
-                texture.get_id(),
-                0,
-            );
-            gl::Viewport(0, 0, stage.output.width as i32, stage.output.height as i32);
-        };
+        texture.bind_as_canvas();
+
+        let shader = &self.ctx.shaders[&stage.shader];
+        shader.bind();
 
         for (idx, input) in stage.inputs.iter().enumerate() {
             let texture = self.ctx.textures.get(&input.name).unwrap();
@@ -61,32 +41,40 @@ impl Executor {
             shader.uniform_1i(&input.uniform, idx as i32)?;
         }
 
-        mesh.draw();
+        self.ctx.default_mesh.draw();
 
-        match stage.output.typ {
-            IOType::File => texture.save_to_file(&format!("{}/{}", self.dir, stage.output.name))?,
-            IOType::Memory => {
-                self.ctx.textures.insert(stage.output.name.clone(), texture);
-            }
-        }
-
-        unsafe {
-            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-        }
+        texture.unbind_as_canvas();
 
         match stage.output.preview {
             Preview::Disabled => (),
-            Preview::Simple => unsafe {
-                gl::Viewport(
-                    self.preview as i32 * 200,
-                    0,
-                    200,
-                    200,
-                );
-                self.ctx.default_shader.bind();
-                mesh.draw();
-                self.preview += 1;
-            },
+            Preview::Simple => self.draw_simple_preview(&texture),
+        }
+
+        self.handle_output(stage, texture)?;
+
+        Ok(())
+    }
+
+    fn draw_simple_preview(&mut self, texture: &Texture) {
+        self.ctx.default_shader.bind();
+        texture.activate_bind(0);
+        unsafe {
+            gl::Viewport(self.preview as i32 * 200, 0, 200, 200);
+        }
+        self.ctx.default_mesh.draw();
+
+        self.preview += 1;
+    }
+
+    fn handle_output(&mut self, stage: &Stage, texture: Texture) -> Result<()> {
+        match stage.output.typ {
+            IOType::File => {
+                let fname = format!("{}/{}", self.dir, stage.output.name);
+                texture.save_to_file(&fname)?;
+            }
+            IOType::Memory => {
+                self.ctx.textures.insert(stage.output.name.clone(), texture);
+            }
         }
 
         Ok(())

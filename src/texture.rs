@@ -4,9 +4,12 @@ use anyhow::{Context, Result};
 use gl::types::GLint;
 use image::RgbaImage;
 
+use crate::framebuffer::Framebuffer;
+
 pub struct Texture {
     image: RgbaImage,
     id: gl::types::GLuint,
+    framebuffer: Framebuffer,
 }
 
 impl Texture {
@@ -47,14 +50,22 @@ impl Texture {
                 image.as_mut_ptr() as *mut c_void,
             );
 
-            // let err = gl::GetError();
-            // println!("write err = {err}");
-
-            // gl::GenerateMipmap(gl::TEXTURE_2D);
             gl::BindTexture(gl::TEXTURE_2D, 0);
         }
 
-        Ok(Self { image, id })
+        let framebuffer = Framebuffer::new();
+
+        let texture = Self {
+            image,
+            id,
+            framebuffer,
+        };
+
+        texture.framebuffer.bind();
+        texture.framebuffer.attach_texture(&texture);
+        texture.framebuffer.unbind();
+
+        Ok(texture)
     }
 
     pub fn activate_bind(&self, idx: u32) {
@@ -64,12 +75,33 @@ impl Texture {
         }
     }
 
+    pub fn bind_as_canvas(&self) {
+        self.framebuffer.bind();
+        unsafe {
+            gl::Viewport(0, 0, self.width() as i32, self.height() as i32);
+        }
+    }
+
+    pub fn unbind_as_canvas(&self) {
+        self.framebuffer.unbind();
+    }
+
     pub fn get_id(&self) -> u32 {
         self.id
     }
 
+    pub fn width(&self) -> u32 {
+        self.image.width()
+    }
+
+    pub fn height(&self) -> u32 {
+        self.image.height()
+    }
+
     pub fn save_to_file(&self, fname: &str) -> Result<()> {
         let (w, h) = (self.image.width() as GLint, self.image.height() as GLint);
+        self.framebuffer.bind();
+
         unsafe {
             gl::ReadPixels(
                 0,
@@ -80,11 +112,18 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 self.image.as_ptr() as *mut c_void,
             );
-            
-            // let err = gl::GetError();
-            // println!("read err = {err}");
         }
         self.image.save(fname)?;
+        self.framebuffer.unbind();
+
         Ok(())
+    }
+}
+
+impl Drop for Texture {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteTextures(1, &self.id);
+        }
     }
 }

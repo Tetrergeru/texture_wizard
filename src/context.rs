@@ -5,13 +5,14 @@ use crate::{
     pipeline::{self, IOType},
     preprocessor::preprocess_shader,
     shader::ShaderProgram,
-    texture::Texture,
+    texture::Texture, mesh::Mesh,
 };
 
 pub struct Ctx {
     pub textures: HashMap<String, Texture>,
     pub shaders: HashMap<String, ShaderProgram>,
     pub default_shader: ShaderProgram,
+    pub default_mesh: Mesh,
 }
 
 const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
@@ -23,12 +24,17 @@ impl Ctx {
             textures: HashMap::new(),
             shaders: HashMap::new(),
             default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
+            default_mesh: Mesh::default_plain(),
         };
 
         let mut results = HashSet::new();
 
         for stage in pipe.pipeline.iter() {
-            ctx.load_shader(&format!("{dir}/{}", stage.shader), &stage.shader)?;
+            ctx.load_shader(
+                &format!("{dir}/{}", stage.shader),
+                &stage.shader,
+                &stage.debug_shader.as_ref().map(|path| format!("{dir}/{path}")),
+            )?;
 
             for input in stage.inputs.iter() {
                 match input.typ {
@@ -54,8 +60,13 @@ impl Ctx {
         Ok(ctx)
     }
 
-    fn load_shader(&mut self, fname: &str, name: &str) -> Result<()> {
-        let shader = preprocess_shader(fname)?;
+    fn load_shader(
+        &mut self,
+        fname: &str,
+        name: &str,
+        debug_shader: &Option<String>,
+    ) -> Result<()> {
+        let shader = preprocess_shader(fname, debug_shader)?;
 
         self.shaders.insert(
             name.to_string(),

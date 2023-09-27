@@ -4,12 +4,14 @@ use anyhow::{Context, Result};
 
 use lazy_static::lazy_static;
 
-pub fn preprocess_shader(name: &str) -> Result<String> {
+pub fn preprocess_shader(name: &str, debug_shader: &Option<String>) -> Result<String> {
     let mut p = Preproseccor::new();
-    
+
     let src = p.load_sorce(name)?.to_owned();
 
-    // fs::write("examples/out/debug.glsl", &src)?;
+    if let Some(path) = debug_shader {
+        fs::write(path, &src)?;
+    }
 
     Ok(src)
 }
@@ -62,7 +64,6 @@ impl Preproseccor {
     }
 
     fn load_sorce(&mut self, name: &str) -> Result<&'_ str> {
-
         if self.processed.contains_key(name) {
             return Ok("");
         }

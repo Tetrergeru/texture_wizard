@@ -7,6 +7,7 @@ pub mod pipeline;
 pub mod shader;
 pub mod texture;
 pub mod preprocessor;
+pub mod framebuffer;
 
 fn main() {
     let pipe = pipeline::Pipeline::load_from_file("examples/project.tw.yaml").unwrap();

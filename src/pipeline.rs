@@ -31,6 +31,8 @@ pub struct Stage {
     pub shader: String,
     pub inputs: Vec<Input>,
     pub output: Output,
+    #[serde(default)]
+    pub debug_shader: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
