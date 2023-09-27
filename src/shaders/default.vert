@@ -11,7 +11,7 @@ out VS_OUTPUT {
 
 void main()
 {
-    gl_Position = vec4(Position, 1.0);
-    OUT.TextureCoords = TextureCoords;
-    OUT.Position = FakePosition;
+    gl_Position = vec4(Position.x, Position.y, Position.z, 1.0);
+    OUT.TextureCoords = vec2(TextureCoords.x, TextureCoords.y);
+    OUT.Position = Position;
 }

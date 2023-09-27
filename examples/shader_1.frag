@@ -12,5 +12,5 @@ uniform sampler2D markup;
 void main() {
     vec4 color = texture(markup, IN.TextureCoords);
     color.b = 1 - color.b;
-    Color = color;
+    Color = 0.0001 * vec4(IN.TextureCoords, 0, 1) + color;
 }

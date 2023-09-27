@@ -10,16 +10,15 @@ in VS_OUTPUT {
 
 out vec4 Color;
 
-uniform sampler2D noise;
+// uniform sampler2D noise;
 
 void main() {
-    vec4 texture_color = texture(noise, IN.TextureCoords);
+    // vec4 texture_color = texture(noise, IN.TextureCoords);
     // color.g = color.g / 2;
     // Color = color * 0.0001 + color_red();
 
     vec2 pos = IN.TextureCoords * 10;
-    // ivec2 i_pos = ivec2(floor(pos));
     float cl = perlin(pos);
 
-    Color = vec4(cl, cl, cl, 1) + texture_color * 0.0001;
+    Color = vec4(cl, cl, cl, 1);
 }

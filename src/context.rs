@@ -13,6 +13,7 @@ pub struct Ctx {
     pub shaders: HashMap<String, ShaderProgram>,
     pub default_shader: ShaderProgram,
     pub default_mesh: Mesh,
+    pub reversed_mesh: Mesh,
 }
 
 const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
@@ -24,7 +25,8 @@ impl Ctx {
             textures: HashMap::new(),
             shaders: HashMap::new(),
             default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
-            default_mesh: Mesh::default_plain(),
+            default_mesh: Mesh::default_plain(false),
+            reversed_mesh: Mesh::default_plain(true),
         };
 
         let mut results = HashSet::new();

@@ -41,7 +41,7 @@ impl Executor {
             shader.uniform_1i(&input.uniform, idx as i32)?;
         }
 
-        self.ctx.default_mesh.draw();
+        self.ctx.reversed_mesh.draw();
 
         texture.unbind_as_canvas();
 

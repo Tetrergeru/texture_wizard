@@ -6,19 +6,19 @@ pipeline:
         uniform: markup
     output:
       type: memory
-      name: noise_1 
+      name: noise_1
       width: 64
       height: 64
-      preview: simple
+      # preview: simple
   - shader: shader_2.frag
     # debug_shader: out/debug_2.glsl
-    inputs:
-      - type: memory
-        name: noise_1
-        uniform: noise
+    inputs: []
+      # - type: memory
+      #   name: noise_1
+      #   uniform: noise
     output:
       type: file
       name: out/result.png
       width: 200
       height: 200
-      preview: simple
+      # preview: simple

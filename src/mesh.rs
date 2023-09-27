@@ -7,33 +7,37 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn default_plain() -> Self {
+    pub fn default_plain(reverse_y: bool) -> Self {
         let vao = Vao::new();
 
-        let fake_positions = Vbo::new(&vec![
+        let vec = vec![
             -1.0, -1.0, 0.0, //
             1.0, -1.0, 0.0, //
             -1.0, 1.0, 0.0, //
             -1.0, 1.0, 0.0, //
             1.0, -1.0, 0.0, //
             1.0, 1.0, 0.0, //
-        ]);
-        let real_positions = Vbo::new(&vec![
-            -1.0, -1.0, 0.0, //
-            1.0, -1.0, 0.0, //
-            -1.0, 1.0, 0.0, //
-            -1.0, 1.0, 0.0, //
-            1.0, -1.0, 0.0, //
-            1.0, 1.0, 0.0, //
-        ]);
-        let uvs = Vbo::new(&vec![
-            0.0, 0.0, //
-            1.0, 0.0, //
+        ];
+
+        let fake_positions = Vbo::new(&vec);
+        let real_positions = Vbo::new(&vec);
+
+        let mut uvs = vec![
             0.0, 1.0, //
-            0.0, 1.0, //
-            1.0, 0.0, //
             1.0, 1.0, //
-        ]);
+            0.0, 0.0, //
+            0.0, 0.0, //
+            1.0, 1.0, //
+            1.0, 0.0, //
+        ];
+
+        if reverse_y {
+            for uv in uvs.iter_mut().skip(1).step_by(2) {
+                *uv = -*uv;
+            }
+        }
+
+        let uvs = Vbo::new(&uvs);
         vao.attach_vbo(&real_positions, 0, 3);
         vao.attach_vbo(&fake_positions, 1, 3);
         vao.attach_vbo(&uvs, 2, 2);
