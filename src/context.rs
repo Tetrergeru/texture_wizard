@@ -1,11 +1,9 @@
 use anyhow::{anyhow, Context, Result};
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-};
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     pipeline::{self, IOType},
+    preprocessor::preprocess_shader,
     shader::ShaderProgram,
     texture::Texture,
 };
@@ -34,7 +32,9 @@ impl Ctx {
 
             for input in stage.inputs.iter() {
                 match input.typ {
-                    IOType::File => ctx.load_image(&format!("{dir}/{}", input.name), &input.name)?,
+                    IOType::File => {
+                        ctx.load_image(&format!("{dir}/{}", input.name), &input.name)?
+                    }
                     IOType::Memory => {
                         if !results.contains(&input.name) {
                             return Err(anyhow!("Unknown resource in input: {}", input.name));
@@ -55,8 +55,7 @@ impl Ctx {
     }
 
     fn load_shader(&mut self, fname: &str, name: &str) -> Result<()> {
-        let shader = fs::read_to_string(fname)
-            .with_context(|| format!("Failed to read shader from '{}'", fname))?;
+        let shader = preprocess_shader(fname)?;
 
         self.shaders.insert(
             name.to_string(),

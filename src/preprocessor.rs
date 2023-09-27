@@ -1,55 +1,54 @@
-use std::{
-    collections::HashMap,
-    fs,
-};
+use std::{collections::HashMap, fs};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+
+use lazy_static::lazy_static;
+
+pub fn preprocess_shader(name: &str) -> Result<String> {
+    let mut p = Preproseccor::new();
+    
+    let src = p.load_sorce(name)?.to_owned();
+
+    Ok(src)
+}
 
 #[derive(Debug)]
-pub struct Preproseccor {
+struct Preproseccor {
     processed: HashMap<String, String>,
 }
 
-const HASH_GLSL: &str = include_str!("shaders/hash.glsl");
-const TEST_GLSL: &str = include_str!("shaders/test.glsl");
+lazy_static! {
+    static ref STANDARD_SHADERS: HashMap<&'static str, &'static str> = {
+        let mut map = HashMap::new();
+        map.insert("hash.glsl", include_str!("shaders/hash.glsl"));
+        map.insert("random.glsl", include_str!("shaders/random.glsl"));
+        map
+    };
+}
 
 impl Preproseccor {
-    pub fn new() -> Result<Self> {
-        let mut slf = Self {
+    fn new() -> Self {
+        Self {
             processed: HashMap::new(),
-        };
-
-        slf.preprocess_shader("hash.glsl", &|| Ok(HASH_GLSL.to_string()))?;
-        slf.preprocess_shader("test.glsl", &|| Ok(TEST_GLSL.to_string()))?;
-
-        Ok(slf)
+        }
     }
 
-    pub fn preprocess_shader(&mut self, name: &str, src: &dyn Fn() -> Result<String>) -> Result<String>
-    {
-        if self.processed.contains_key(name) {
-            return Ok(self.processed[name].clone());
-        }
-
-
-        println!("name = '{name}'");
+    fn preprocess_shader(&mut self, name: &str, src: &str) -> Result<String> {
         let mut res = String::new();
-        let src = src()?;
 
         for l in src.lines() {
             if l.trim_start().starts_with("#include") {
-                let fst = l.find('"').expect("Broken include syntax: missing '\"'");
-                let lst = l.rfind('"').expect("Broken include syntax: missing '\"'");
+                let fst = l.find('"').expect("Broken include syntax: missing `\"`");
+                let lst = l.rfind('"').expect("Broken include syntax: missing `\"`");
                 if fst == lst {
-                    panic!("Broken include syntax: missing ");
+                    panic!("Broken include syntax: required two `\"`");
                 }
 
-                let incl_name = &l[fst+1..lst];
-                println!("incl_name = '{incl_name}'");
+                let incl_name = &l[fst + 1..lst];
 
-                res.push_str(
-                    &self.preprocess_shader(incl_name, &|| Ok(fs::read_to_string(incl_name)?))?,
-                )
+                let included = self.load_sorce(incl_name)?;
+
+                res.push_str(included);
             } else {
                 res.push_str(l);
                 res.push('\n');
@@ -59,5 +58,23 @@ impl Preproseccor {
         self.processed.insert(name.to_string(), res.clone());
         Ok(res)
     }
-}
 
+    fn load_sorce(&mut self, name: &str) -> Result<&'_ str> {
+        if self.processed.contains_key(name) {
+            return Ok(&self.processed[name]);
+        }
+
+        let processed = if STANDARD_SHADERS.contains_key(name) {
+            let file = STANDARD_SHADERS[name];
+            self.preprocess_shader(name, file)?
+        } else {
+            let file = fs::read_to_string(name);
+            let file = file.with_context(|| format!("Loading shader file '{name}'"))?;
+            self.preprocess_shader(name, &file)?
+        };
+
+        self.processed.insert(name.into(), processed);
+
+        Ok(&self.processed[name])
+    }
+}
