@@ -1,7 +1,7 @@
 #version 330 core
 
 #include "random.glsl"
-#include "examples/perlin.glsl"
+#include "perlin.glsl"
 
 in VS_OUTPUT {
     vec2 TextureCoords;

@@ -26,6 +26,7 @@ lazy_static! {
         let mut map = HashMap::new();
         map.insert("hash.glsl", include_str!("shaders/hash.glsl"));
         map.insert("random.glsl", include_str!("shaders/random.glsl"));
+        map.insert("perlin.glsl", include_str!("shaders/perlin.glsl"));
         map
     };
 }
