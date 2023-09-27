@@ -1,19 +1,19 @@
 #![allow(clippy::single_match)]
 
+use context::Ctx;
+
 pub mod context;
 pub mod executor;
+pub mod expirable;
+pub mod framebuffer;
 pub mod mesh;
 pub mod pipeline;
+pub mod preprocessor;
 pub mod shader;
 pub mod texture;
-pub mod preprocessor;
-pub mod framebuffer;
 
 fn main() {
-    let pipe = pipeline::Pipeline::load_from_file("examples/project.tw.yaml").unwrap();
-    let previews = pipe.number_of_previews();
-
-    let width = previews * 200;
+    let width = 400;
     let height = 200_usize;
 
     let sdl = sdl2::init().unwrap();
@@ -36,10 +36,13 @@ fn main() {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
 
-    executor::execute_pipeline(&pipe, "examples").unwrap();
+    let mut ctx = Ctx::load_pipeline("project.tw.yaml", "examples").unwrap();
+    let previews = ctx.pipeline.data().number_of_previews();
+
+    executor::execute_pipeline(&mut ctx, "project.tw.yaml", "examples", true).unwrap();
 
     if previews == 0 {
-        return
+        return;
     }
 
     let mut event_pump = sdl.event_pump().unwrap();
@@ -56,7 +59,7 @@ fn main() {
             // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
         }
 
-        executor::execute_pipeline(&pipe, "examples").unwrap();
+        executor::execute_pipeline(&mut ctx, "project.tw.yaml", "examples", false).unwrap();
 
         window.gl_swap_window();
     }

@@ -2,7 +2,7 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pipeline {
     pub pipeline: Vec<Stage>,
 }
@@ -26,7 +26,7 @@ impl Pipeline {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Stage {
     pub shader: String,
     pub inputs: Vec<Input>,
@@ -35,7 +35,7 @@ pub struct Stage {
     pub debug_shader: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Input {
     #[serde(rename = "type")]
     pub typ: IOType,
@@ -43,7 +43,7 @@ pub struct Input {
     pub uniform: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Output {
     #[serde(rename = "type")]
     pub typ: IOType,
@@ -54,7 +54,7 @@ pub struct Output {
     pub preview: Preview,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IOType {
     #[serde(rename = "file")]
     File,
@@ -62,7 +62,7 @@ pub enum IOType {
     Memory,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Preview {
     #[serde(rename = "disabled")]
     Disabled,
