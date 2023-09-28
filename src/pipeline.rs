@@ -2,14 +2,16 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
+use crate::project_path::ProjectPath;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pipeline {
     pub pipeline: Vec<Stage>,
 }
 
 impl Pipeline {
-    pub fn load_from_file(fname: &str) -> anyhow::Result<Self> {
-        let pipeline = fs::read_to_string(fname)?;
+    pub fn load_from_file(path: &ProjectPath) -> anyhow::Result<Self> {
+        let pipeline = fs::read_to_string(path.main())?;
         let pipeline = serde_yaml::from_str(&pipeline)?;
         Ok(pipeline)
     }

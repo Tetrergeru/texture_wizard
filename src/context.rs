@@ -9,15 +9,17 @@ use std::{
 use crate::{
     expirable::Expirable,
     mesh::Mesh,
-    pipeline::{IOType, Input, Pipeline, Stage},
+    pipeline::{IOType, Input, Pipeline, Preview, Stage},
     preprocessor::preprocess_shader,
+    project_path::ProjectPath,
     shader::ShaderProgram,
     texture::Texture,
 };
 
 pub struct Ctx {
-    pub pipeline: Expirable<Pipeline>,
+    pub project_path: ProjectPath,
 
+    // pub pipeline: Expirable<Pipeline>,
     pub textures: HashMap<String, Expirable<Texture>>,
     pub shaders: HashMap<String, Expirable<ShaderProgram>>,
 
@@ -30,11 +32,9 @@ const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
 const DEFAULT_FRAGMENT_SHADER: &str = include_str!("shaders/default.frag");
 
 impl Ctx {
-    pub fn load_pipeline(file: &str, dir: &str) -> Result<Self> {
-        let pipeline = Pipeline::load_from_file(&format!("{dir}/{file}"))?;
-
+    pub fn load(project_path: ProjectPath, pipe: &Expirable<Pipeline>) -> Result<Self> {
         let mut ctx = Self {
-            pipeline: Expirable::now(pipeline),
+            project_path,
             textures: HashMap::new(),
             shaders: HashMap::new(),
             default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
@@ -42,41 +42,40 @@ impl Ctx {
             reversed_mesh: Mesh::default_plain(true),
         };
 
-        ctx.refresh_stages(dir)?;
+        ctx.refresh_stages(pipe)?;
 
         Ok(ctx)
     }
 
-    pub fn refresh_pipeline(&mut self, file: &str, dir: &str) -> Result<bool> {
-        let path = format!("{dir}/{file}");
+    pub fn refresh_pipeline(&mut self, pipe: &mut Expirable<Pipeline>) -> Result<bool> {
+        let path = self.project_path.main();
         let modified = file_modified(&path)?;
 
         let mut changed = false;
 
-        if self.pipeline.expired(modified) {
+        if pipe.expired(modified) {
             changed = true;
             println!("pipeline file expired");
-            self.pipeline = Expirable::now(Pipeline::load_from_file(&path)?);
+            *pipe = Expirable::now(Pipeline::load_from_file(&self.project_path)?);
         }
 
-        changed |= self.refresh_stages(dir)?;
+        changed |= self.refresh_stages(pipe)?;
 
         Ok(changed)
     }
 
-    fn refresh_stages(&mut self, dir: &str) -> Result<bool> {
+    fn refresh_stages(&mut self, pipe: &Expirable<Pipeline>) -> Result<bool> {
         let mut textures = HashSet::new();
         let mut shaders = HashSet::new();
 
         let mut changed = false;
 
-        let pipeline = self.pipeline.data().clone();
-        for stage in pipeline.pipeline.iter() {
-            changed |= self.refresh_shader(stage, dir)?;
+        for stage in pipe.data().pipeline.iter() {
+            changed |= self.refresh_shader(stage)?;
             shaders.insert(stage.shader.clone());
 
             for input in stage.inputs.iter() {
-                changed |= self.refresh_input(input, dir, &mut textures)?;
+                changed |= self.refresh_input(input, &mut textures)?;
             }
 
             match stage.output.typ {
@@ -84,6 +83,13 @@ impl Ctx {
                     textures.insert(stage.output.name.clone());
                 }
                 IOType::File => (),
+            }
+
+            match stage.output.preview {
+                Preview::Disabled => (),
+                Preview::Simple => {
+                    textures.insert(stage.output.name.clone());
+                }
             }
         }
 
@@ -93,8 +99,8 @@ impl Ctx {
         Ok(changed)
     }
 
-    fn refresh_shader(&mut self, stage: &Stage, dir: &str) -> Result<bool> {
-        let fname = format!("{dir}/{}", stage.shader);
+    fn refresh_shader(&mut self, stage: &Stage) -> Result<bool> {
+        let fname = self.project_path.path(&stage.shader);
         let modified = file_modified(&fname)?;
 
         let shader = self.shaders.get(&stage.shader);
@@ -108,7 +114,10 @@ impl Ctx {
 
         let shader = preprocess_shader(
             &fname,
-            &stage.debug_shader.as_ref().map(|path| format!("{dir}/{path}")),
+            &stage
+                .debug_shader
+                .as_ref()
+                .map(|path| self.project_path.path(path)),
         )?;
 
         let shader = ShaderProgram::new(DEFAULT_VERTEX_SHADER, &shader)
@@ -120,10 +129,10 @@ impl Ctx {
         Ok(true)
     }
 
-    fn refresh_input(&mut self, input: &Input, dir: &str, r: &mut HashSet<String>) -> Result<bool> {
+    fn refresh_input(&mut self, input: &Input, r: &mut HashSet<String>) -> Result<bool> {
         match input.typ {
             IOType::File => {
-                let fname = format!("{dir}/{}", input.name);
+                let fname = self.project_path.path(&input.name);
                 r.insert(input.name.clone());
                 Ok(self.refresh_image(&fname, &input.name)?)
             }

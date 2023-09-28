@@ -1,6 +1,9 @@
 #![allow(clippy::single_match)]
 
 use context::Ctx;
+use expirable::Expirable;
+use pipeline::Pipeline;
+use project_path::ProjectPath;
 
 pub mod context;
 pub mod executor;
@@ -9,11 +12,16 @@ pub mod framebuffer;
 pub mod mesh;
 pub mod pipeline;
 pub mod preprocessor;
+pub mod project_path;
 pub mod shader;
 pub mod texture;
 
 fn main() {
-    let width = 400;
+    let path = ProjectPath::new("examples", "project.tw.yaml");
+    let mut pipeline = Expirable::now(Pipeline::load_from_file(&path).unwrap());
+    let previews = pipeline.data().number_of_previews();
+
+    let width = 200 * previews;
     let height = 200_usize;
 
     let sdl = sdl2::init().unwrap();
@@ -36,10 +44,9 @@ fn main() {
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
 
-    let mut ctx = Ctx::load_pipeline("project.tw.yaml", "examples").unwrap();
-    let previews = ctx.pipeline.data().number_of_previews();
+    let mut ctx = Ctx::load(path, &pipeline).unwrap();
 
-    executor::execute_pipeline(&mut ctx, "project.tw.yaml", "examples", true).unwrap();
+    executor::execute_pipeline(&mut ctx, &mut pipeline, true).unwrap();
 
     if previews == 0 {
         return;
@@ -59,7 +66,7 @@ fn main() {
             // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
         }
 
-        executor::execute_pipeline(&mut ctx, "project.tw.yaml", "examples", false).unwrap();
+        executor::execute_pipeline(&mut ctx, &mut pipeline, false).unwrap();
 
         window.gl_swap_window();
     }

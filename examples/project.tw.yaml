@@ -10,7 +10,7 @@ pipeline:
       name: noise_1
       width: 64
       height: 64
-      # preview: simple
+      preview: simple
   - shader: shader_2.frag
     debug_shader: out/debug_2.glsl
     inputs: []
@@ -22,4 +22,4 @@ pipeline:
       name: out/result.png
       width: 200
       height: 200
-      # preview: simple
+      preview: simple

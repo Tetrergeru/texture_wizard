@@ -1,40 +1,58 @@
 use std::time::SystemTime;
 
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 
 use crate::{
     context::Ctx,
-    pipeline::{IOType, Preview, Stage},
-    texture::Texture, expirable::Expirable,
+    expirable::Expirable,
+    pipeline::{IOType, Pipeline, Preview, Stage},
+    texture::Texture,
 };
 
-pub fn execute_pipeline(ctx: &mut Ctx, fname: &str, dir: &str, force: bool) -> Result<()> {
-    if !ctx.refresh_pipeline(fname, dir)? && !force {
-        return Ok(())
+pub fn execute_pipeline(ctx: &mut Ctx, pipe: &mut Expirable<Pipeline>, force: bool) -> Result<()> {
+    if !ctx.refresh_pipeline(pipe)? && !force {
+        let mut e = Executor { ctx };
+
+        e.draw_previews(pipe.data());
+
+        return Ok(());
     }
 
-    println!("Reexecuting pipeline {:?}", SystemTime::now());
+    let datetime: DateTime<Utc> = SystemTime::now().into();
+    println!("Reexecuting pipeline {}", datetime.format("%Y.%m.%d/ %T"));
 
-    let mut e = Executor {
-        dir: dir.to_string(),
-        ctx,
-        preview: 0,
-    };
+    let mut e = Executor { ctx };
 
-    let pipeline = e.ctx.pipeline.data().clone();
-    for stage in pipeline.pipeline.iter() {
+    for stage in pipe.data().pipeline.iter() {
         e.execute_stage(stage)?;
     }
+
+    e.draw_previews(pipe.data());
+
     Ok(())
 }
 
 struct Executor<'a> {
-    dir: String,
     ctx: &'a mut Ctx,
-    preview: usize,
 }
 
 impl<'a> Executor<'a> {
+    fn draw_previews(&mut self, pipe: &Pipeline) {
+        let mut preview = 0;
+
+        for stage in pipe.pipeline.iter() {
+            match stage.output.preview {
+                Preview::Disabled => (),
+                Preview::Simple => {
+                    let texture = &self.ctx.textures[&stage.output.name];
+                    self.draw_simple_preview(texture.data(), preview);
+                    preview += 1;
+                }
+            }
+        }
+    }
+
     fn execute_stage(&mut self, stage: &Stage) -> Result<()> {
         let texture = Texture::from_size(stage.output.width, stage.output.height)?;
         texture.bind_as_canvas();
@@ -52,39 +70,32 @@ impl<'a> Executor<'a> {
 
         texture.unbind_as_canvas();
 
-        match stage.output.preview {
-            Preview::Disabled => (),
-            Preview::Simple => self.draw_simple_preview(&texture),
-        }
-
         self.handle_output(stage, texture)?;
 
         Ok(())
     }
 
-    fn draw_simple_preview(&mut self, texture: &Texture) {
+    fn draw_simple_preview(&self, texture: &Texture, idx: isize) {
         self.ctx.default_shader.bind();
         texture.activate_bind(0);
         unsafe {
-            gl::Viewport(self.preview as i32 * 200, 0, 200, 200);
+            gl::Viewport(idx as i32 * 200, 0, 200, 200);
         }
         self.ctx.default_mesh.draw();
-
-        self.preview += 1;
     }
 
     fn handle_output(&mut self, stage: &Stage, texture: Texture) -> Result<()> {
         match stage.output.typ {
             IOType::File => {
-                let fname = format!("{}/{}", self.dir, stage.output.name);
+                let fname = self.ctx.project_path.path(&stage.output.name);
                 texture.save_to_file(&fname)?;
             }
-            IOType::Memory => {
-                self.ctx
-                    .textures
-                    .insert(stage.output.name.clone(), Expirable::now(texture));
-            }
+            IOType::Memory => (),
         }
+
+        self.ctx
+            .textures
+            .insert(stage.output.name.clone(), Expirable::now(texture));
 
         Ok(())
     }

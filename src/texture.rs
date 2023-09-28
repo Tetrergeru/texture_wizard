@@ -1,7 +1,9 @@
 use std::ffi::c_void;
 
 use anyhow::{Context, Result};
+use core::fmt::Debug;
 use gl::types::GLint;
+
 use image::RgbaImage;
 
 use crate::framebuffer::Framebuffer;
@@ -10,6 +12,17 @@ pub struct Texture {
     image: RgbaImage,
     id: gl::types::GLuint,
     framebuffer: Framebuffer,
+}
+
+impl Debug for Texture {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Texture")
+            .field("width", &self.width())
+            .field("height", &self.height())
+            .field("id", &self.id)
+            .field("framebuffer", &self.framebuffer)
+            .finish()
+    }
 }
 
 impl Texture {

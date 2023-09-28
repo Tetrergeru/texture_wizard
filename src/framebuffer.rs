@@ -1,5 +1,6 @@
 use crate::texture::Texture;
 
+#[derive(Debug)]
 pub struct Framebuffer {
     id: u32,
 }
