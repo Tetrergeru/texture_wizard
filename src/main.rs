@@ -95,5 +95,6 @@ fn main() {
         }
 
         window.gl_swap_window();
+        thread::sleep(Duration::from_secs_f32(0.1));
     }
 }

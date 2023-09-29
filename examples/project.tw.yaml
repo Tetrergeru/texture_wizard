@@ -1,6 +1,5 @@
 pipeline:
   - shader: brick_shape.glsl
-    debug_shader: out/brick_shape.glsl
     inputs: []
     output:
       type: memory

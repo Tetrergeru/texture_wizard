@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use crate::{
     context::Ctx,
     expirable::Expirable,
-    pipeline::{IOType, Pipeline, Preview, Stage},
+    pipeline::{IOType, Pipeline, Preview, Profiling, Stage},
     texture::Texture,
 };
 
@@ -68,7 +68,18 @@ impl<'a> Executor<'a> {
             shader.data().uniform_1i(&input.uniform, idx as i32)?;
         }
 
+        let start = SystemTime::now();
+
         self.ctx.reversed_mesh.draw();
+
+        let elapsed = start.elapsed()?;
+
+        match stage.profiling {
+            Profiling::Disabled => (),
+            Profiling::Clock => {
+                println!("Shader {} executed in {} sec", stage.shader, elapsed.as_secs_f64());
+            }
+        }
 
         texture.unbind_as_canvas();
 

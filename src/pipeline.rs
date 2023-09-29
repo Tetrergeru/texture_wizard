@@ -35,6 +35,22 @@ pub struct Stage {
     pub output: Output,
     #[serde(default)]
     pub debug_shader: Option<String>,
+    #[serde(default)]
+    pub profiling: Profiling,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Profiling {
+    #[serde(rename = "disabled")]
+    Disabled,
+    #[serde(rename = "clock")]
+    Clock,
+}
+
+impl Default for Profiling {
+    fn default() -> Self {
+        Self::Disabled
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
