@@ -19,8 +19,10 @@ pub fn execute_pipeline(ctx: &mut Ctx, pipe: &mut Expirable<Pipeline>, force: bo
         return Ok(());
     }
 
-    let datetime: DateTime<Utc> = SystemTime::now().into();
-    println!("Reexecuting pipeline {}", datetime.format("%Y.%m.%d/ %T"));
+    if ctx.logs_enabled {
+        let datetime: DateTime<Utc> = SystemTime::now().into();
+        println!("Reexecuting pipeline {}", datetime.format("%Y.%m.%d/ %T"));
+    }
 
     let mut e = Executor { ctx };
 

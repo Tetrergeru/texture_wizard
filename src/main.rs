@@ -1,5 +1,7 @@
 #![allow(clippy::single_match)]
 
+use std::{thread, time::Duration};
+
 use context::Ctx;
 use expirable::Expirable;
 use pipeline::Pipeline;
@@ -53,6 +55,7 @@ fn main() {
     }
 
     let mut event_pump = sdl.event_pump().unwrap();
+    let mut err: Option<anyhow::Error> = None;
     loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -66,7 +69,30 @@ fn main() {
             // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
         }
 
-        executor::execute_pipeline(&mut ctx, &mut pipeline, false).unwrap();
+        match (
+            &err,
+            executor::execute_pipeline(&mut ctx, &mut pipeline, false),
+        ) {
+            (None, Ok(_)) => (),
+            (Some(_), Ok(_)) => {
+                err = None;
+                ctx.logs_enabled = true;
+                println!("Error resolved");
+            },
+            (None, Err(e)) => {
+                println!("Error: {e:?}");
+                err = Some(e);
+                ctx.logs_enabled = false;
+                thread::sleep(Duration::from_secs(1));
+            }
+            (Some(e0), Err(e1)) => {
+                if format!("{e0:?}") != format!("{e1:?}") {
+                    println!("Error: {e1:?}");
+                    err = Some(e1);
+                }
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
 
         window.gl_swap_window();
     }

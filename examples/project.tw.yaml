@@ -1,25 +1,22 @@
 pipeline:
-  - shader: shader_1.frag
-    debug_shader: out/debug_1.glsl
-    inputs:
-      - type: file
-        name: markup.png
-        uniform: markup
+  - shader: brick_shape.glsl
+    debug_shader: out/brick_shape.glsl
+    inputs: []
     output:
       type: memory
-      name: noise_1
-      width: 64
-      height: 64
+      name: brick_shape
+      width: 512
+      height: 512
       preview: simple
-  - shader: shader_2.frag
-    debug_shader: out/debug_2.glsl
-    inputs: []
-      # - type: memory
-      #   name: noise_1
-      #   uniform: noise
+  - shader: brick_paint.glsl
+    # debug_shader: out/debug_2.glsl
+    inputs:
+      - type: memory
+        name: brick_shape
+        uniform: brick_shape
     output:
       type: file
       name: out/result.png
-      width: 200
-      height: 200
+      width: 512
+      height: 512
       preview: simple

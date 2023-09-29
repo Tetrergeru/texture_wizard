@@ -26,6 +26,8 @@ pub struct Ctx {
     pub default_shader: ShaderProgram,
     pub default_mesh: Mesh,
     pub reversed_mesh: Mesh,
+
+    pub logs_enabled: bool,
 }
 
 const DEFAULT_VERTEX_SHADER: &str = include_str!("shaders/default.vert");
@@ -40,6 +42,7 @@ impl Ctx {
             default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
             default_mesh: Mesh::default_plain(false),
             reversed_mesh: Mesh::default_plain(true),
+            logs_enabled: true,
         };
 
         ctx.refresh_stages(pipe)?;
@@ -55,7 +58,9 @@ impl Ctx {
 
         if pipe.expired(modified) {
             changed = true;
-            println!("pipeline file expired");
+            if self.logs_enabled {
+                println!("pipeline file expired");
+            }
             *pipe = Expirable::now(Pipeline::load_from_file(&self.project_path)?);
         }
 
@@ -110,8 +115,9 @@ impl Ctx {
             }
         }
 
-        println!("Shader `{}` expired", stage.shader);
-
+        if self.logs_enabled {
+            println!("Shader `{}` expired", stage.shader);
+        }
         let shader = preprocess_shader(
             &fname,
             &stage
@@ -153,8 +159,10 @@ impl Ctx {
                 return Ok(false);
             }
         }
-        println!("Image `{}` expired", fname);
 
+        if self.logs_enabled {
+            println!("Image `{}` expired", fname);
+        }
         let texture = Expirable::now(Texture::from_file(fname)?);
         self.textures.insert(name.to_string(), texture);
 
