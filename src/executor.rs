@@ -11,7 +11,12 @@ use crate::{
     texture::Texture,
 };
 
-pub fn execute_pipeline(ctx: &mut Ctx, pipe: &mut Expirable<Pipeline>, force: bool) -> Result<()> {
+pub fn execute_pipeline<F: FnOnce(usize)>(
+    ctx: &mut Ctx,
+    pipe: &mut Expirable<Pipeline>,
+    force: bool,
+    preview_callback: F,
+) -> Result<()> {
     if !ctx.refresh_pipeline(pipe)? && !force {
         let mut e = Executor { ctx };
 
@@ -31,6 +36,7 @@ pub fn execute_pipeline(ctx: &mut Ctx, pipe: &mut Expirable<Pipeline>, force: bo
         e.execute_stage(stage)?;
     }
 
+    preview_callback(pipe.data().number_of_previews());
     e.draw_previews(pipe.data());
 
     Ok(())

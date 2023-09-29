@@ -12,7 +12,7 @@ pipeline:
       name: brick_shape
       width: 512
       height: 512
-      # preview: simple
+      preview: simple
   - shader: brick_paint.glsl
     # debug_shader: out/debug_2.glsl
     inputs:

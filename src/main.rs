@@ -28,7 +28,7 @@ fn main() {
 
     let sdl = sdl2::init().unwrap();
     let video_subsystem = sdl.video().unwrap();
-    let window = video_subsystem
+    let mut window = video_subsystem
         .window("Texture Wizard", width as u32, height as u32)
         .opengl()
         .resizable()
@@ -41,14 +41,13 @@ fn main() {
 
     unsafe {
         gl::Viewport(0, 0, width as gl::types::GLint, height as gl::types::GLint);
-        // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
         gl::Enable(gl::DEPTH_TEST);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
     }
 
     let mut ctx = Ctx::load(path, &pipeline).unwrap();
 
-    executor::execute_pipeline(&mut ctx, &mut pipeline, true).unwrap();
+    executor::execute_pipeline(&mut ctx, &mut pipeline, true, |_| ()).unwrap();
 
     if previews == 0 {
         return;
@@ -66,13 +65,15 @@ fn main() {
 
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            // gl::ClearColor(0.3, 0.3, 0.5, 1.0);
         }
 
-        match (
-            &err,
-            executor::execute_pipeline(&mut ctx, &mut pipeline, false),
-        ) {
+        let new_err = executor::execute_pipeline(&mut ctx, &mut pipeline, false, |p| {
+            let width = 200 * p;
+            let height = 200_usize;
+            window.set_size(width as u32, height as u32).unwrap();
+        });
+
+        match (&err, new_err) {
             (None, Ok(_)) => (),
             (Some(_), Ok(_)) => {
                 err = None;
