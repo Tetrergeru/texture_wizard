@@ -14,10 +14,11 @@ out vec4 Color;
 uniform ivec2 scale;
 
 void main() {
-    vec2 pos = IN.Position.xy * scale;
+    float scale_y = scale.y / 2.0;
+    vec2 pos = IN.Position.xy * vec2(scale.x, scale_y);
 
     pos.x += scale.x;
-    pos.y += scale.y;
+    pos.y += scale_y;
 
     ivec2 ipos = ivec2(floor(pos));
 
@@ -34,5 +35,5 @@ void main() {
 
     vec2 uv = (pos - ipos) * vec2(0.5, 1);
 
-    Color = vec4(uv, ipos.x / (scale.x * 2.0), ipos.y / (scale.y * 2.0));
+    Color = vec4(uv, ipos.x / (scale.x * 2.0), ipos.y / (scale_y * 2.0));
 }

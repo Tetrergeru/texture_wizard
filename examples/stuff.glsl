@@ -1,5 +1,3 @@
-
-
 float my_perlin(vec2 pos) {
     float p = perlin(pos);
     p =  clamp((p - 0.5) * 3 + 0.5, 0, 1);

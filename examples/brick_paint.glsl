@@ -82,7 +82,9 @@ void main() {
         HashSeed = hash_2(brick.x, brick.y);
         color = brick_color * fractal_noise(uv * 4, 4);
     } else {
-        color = vec3(1, 1, 1);
+        HashSeed = 1;
+        float noise = fractal_noise(pos * 64, 5) * 0.8 + 0.2;
+        color = vec3(1, 1, 1) * noise;
     }
 
     Color = vec4(color, 1);
