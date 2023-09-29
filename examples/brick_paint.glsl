@@ -12,7 +12,8 @@ in VS_OUTPUT {
 out vec4 Color;
 
 uniform sampler2D brick_shape;
-vec2 scale = vec2(3, 6);
+uniform ivec2 scale;
+uniform vec3 brick_color;
 
 float simple_noise(vec2 pos) {
     ivec2 ipos = ivec2(floor(pos));
@@ -79,7 +80,7 @@ void main() {
     vec3 color;
     if (shape > 0.15) {
         HashSeed = hash_2(brick.x, brick.y);
-        color = vec3(1, 0, 0) * fractal_noise(uv * 4, 4);
+        color = brick_color * fractal_noise(uv * 4, 4);
     } else {
         color = vec3(1, 1, 1);
     }

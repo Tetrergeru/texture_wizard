@@ -3,6 +3,8 @@ use std::ffi::CString;
 use anyhow::{anyhow, Context, Ok, Result};
 use gl::types::{GLchar, GLenum, GLint, GLuint};
 
+use crate::pipeline::Expr;
+
 #[derive(Debug)]
 pub struct ShaderProgram {
     frag_shader: GLuint,
@@ -33,15 +35,118 @@ impl ShaderProgram {
         }
     }
 
-    pub fn uniform_1i(&self, name: &str, value: i32) -> Result<()> {
+    pub fn uniform_expr(&self, name: &str, v: &Expr) -> Result<()> {
+        match v {
+            Expr::Float(v) => self.uniform_1f(name, *v)?,
+            Expr::Vec2(v) => self.uniform_2f(name, *v)?,
+            Expr::Vec3(v) => self.uniform_3f(name, *v)?,
+            Expr::Vec4(v) => self.uniform_4f(name, *v)?,
+            Expr::String(v) => {
+                if !v.starts_with('#') {
+                    return Err(anyhow!("Only color string are supported as uniforms"));
+                }
+                let r = Self::str_to_f32(&v[1..3])?;
+                let g = Self::str_to_f32(&v[3..5])?;
+                let b = Self::str_to_f32(&v[5..7])?;
+                self.uniform_3f(name, [r, g, b])?;
+            }
+        }
+        Ok(())
+    }
+
+    fn str_to_f32(s: &str) -> Result<f32> {
+        let mut res = 0;
+        for c in s.chars() {
+            res *= 16;
+            res += Self::char_as_digit(c)?;
+        }
+
+        Ok(res as f32 / 255.0)
+    }
+
+    fn char_as_digit(c: char) -> Result<u32> {
+        if c.is_ascii_digit() {
+            Ok(c as u32 - '0' as u32)
+        } else if c >= 'a' || c <= 'f' {
+            Ok(c as u32 - 'a' as u32 + 10)
+        } else {
+            Err(anyhow!("Expect only digits in color string, got '{c}'"))
+        }
+    }
+
+    pub fn uniform_1i(&self, name: &str, v: i32) -> Result<()> {
+        self.uniform(name, |id| unsafe { gl::Uniform1i(id, v) })
+    }
+
+    pub fn uniform_1f(&self, name: &str, v: f32) -> Result<()> {
+        self.uniform(name, |id| unsafe {
+            if self.uniform_type(id) == gl::FLOAT {
+                gl::Uniform1f(id, v)
+            } else {
+                gl::Uniform1i(id, v as i32)
+            }
+        })
+    }
+
+    pub fn uniform_2f(&self, name: &str, v: [f32; 2]) -> Result<()> {
+        self.uniform(name, |id| unsafe {
+            if self.uniform_type(id) == gl::FLOAT_VEC2 {
+                gl::Uniform2f(id, v[0], v[1])
+            } else {
+                gl::Uniform2i(id, v[0] as i32, v[1] as i32)
+            }
+        })
+    }
+
+    pub fn uniform_3f(&self, name: &str, v: [f32; 3]) -> Result<()> {
+        self.uniform(name, |id| unsafe {
+            if self.uniform_type(id) == gl::FLOAT_VEC3 {
+                gl::Uniform3f(id, v[0], v[1], v[2])
+            } else {
+                gl::Uniform3i(id, v[0] as i32, v[1] as i32, v[2] as i32)
+            }
+        })
+    }
+
+    pub fn uniform_4f(&self, name: &str, v: [f32; 4]) -> Result<()> {
+        self.uniform(name, |id| unsafe {
+            if self.uniform_type(id) == gl::FLOAT_VEC4 {
+                gl::Uniform4f(id, v[0], v[1], v[2], v[3])
+            } else {
+                gl::Uniform4i(id, v[0] as i32, v[1] as i32, v[2] as i32, v[3] as i32)
+            }
+        })
+    }
+
+    fn uniform<F: Fn(i32)>(&self, name: &str, f: F) -> Result<()> {
         let uniform_id = self.get_uniform_location(name)?;
 
         unsafe {
             gl::UseProgram(self.program_id);
-            gl::Uniform1i(uniform_id, value);
         }
 
+        f(uniform_id);
+
         Ok(())
+    }
+
+    fn uniform_type(&self, id: i32) -> u32 {
+        let mut length = 0;
+        let mut size = 0;
+        let mut typ = 0;
+        let mut name = 0;
+        unsafe {
+            gl::GetActiveUniform(
+                self.program_id,
+                id as u32,
+                0,
+                &mut length,
+                &mut size,
+                &mut typ,
+                &mut name,
+            );
+        }
+        typ
     }
 
     pub fn get_uniform_location(&self, name: &str) -> Result<i32> {

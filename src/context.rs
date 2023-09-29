@@ -9,7 +9,7 @@ use std::{
 use crate::{
     expirable::Expirable,
     mesh::Mesh,
-    pipeline::{IOType, Input, Pipeline, Preview, Stage},
+    pipeline::{Expr, Input, Pipeline, Preview, Source, Stage},
     preprocessor::preprocess_shader,
     project_path::ProjectPath,
     shader::ShaderProgram,
@@ -19,9 +19,9 @@ use crate::{
 pub struct Ctx {
     pub project_path: ProjectPath,
 
-    // pub pipeline: Expirable<Pipeline>,
     pub textures: HashMap<String, Expirable<Texture>>,
     pub shaders: HashMap<String, Expirable<ShaderProgram>>,
+    pub variables: HashMap<String, Expr>,
 
     pub default_shader: ShaderProgram,
     pub default_mesh: Mesh,
@@ -39,13 +39,15 @@ impl Ctx {
             project_path,
             textures: HashMap::new(),
             shaders: HashMap::new(),
+            variables: HashMap::new(),
             default_shader: ShaderProgram::new(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER)?,
             default_mesh: Mesh::default_plain(false),
             reversed_mesh: Mesh::default_plain(true),
             logs_enabled: true,
         };
 
-        ctx.refresh_stages(pipe)?;
+        ctx.refresh_variables(pipe.data());
+        ctx.refresh_stages(pipe.data())?;
 
         Ok(ctx)
     }
@@ -62,20 +64,27 @@ impl Ctx {
                 println!("pipeline file expired");
             }
             *pipe = Expirable::now(Pipeline::load_from_file(&self.project_path)?);
+            self.refresh_variables(pipe.data());
         }
 
-        changed |= self.refresh_stages(pipe)?;
+        changed |= self.refresh_stages(pipe.data())?;
 
         Ok(changed)
     }
 
-    fn refresh_stages(&mut self, pipe: &Expirable<Pipeline>) -> Result<bool> {
+    fn refresh_variables(&mut self, pipe: &Pipeline) {
+        for (name, expr) in pipe.variables.iter() {
+            self.variables.insert(name.clone(), expr.clone());
+        }
+    }
+
+    fn refresh_stages(&mut self, pipe: &Pipeline) -> Result<bool> {
         let mut textures = HashSet::new();
         let mut shaders = HashSet::new();
 
         let mut changed = false;
 
-        for stage in pipe.data().pipeline.iter() {
+        for stage in pipe.pipeline.iter() {
             changed |= self.refresh_shader(stage)?;
             shaders.insert(stage.shader.clone());
 
@@ -83,11 +92,11 @@ impl Ctx {
                 changed |= self.refresh_input(input, &mut textures)?;
             }
 
-            match stage.output.typ {
-                IOType::Memory => {
+            match stage.output.dst {
+                Source::Memory => {
                     textures.insert(stage.output.name.clone());
                 }
-                IOType::File => (),
+                Source::File => (),
             }
 
             match stage.output.preview {
@@ -136,18 +145,19 @@ impl Ctx {
     }
 
     fn refresh_input(&mut self, input: &Input, r: &mut HashSet<String>) -> Result<bool> {
-        match input.typ {
-            IOType::File => {
-                let fname = self.project_path.path(&input.name);
-                r.insert(input.name.clone());
-                Ok(self.refresh_image(&fname, &input.name)?)
+        match input {
+            Input::File { name, .. } => {
+                let fname = self.project_path.path(name);
+                r.insert(name.clone());
+                Ok(self.refresh_image(&fname, name)?)
             }
-            IOType::Memory => {
-                if !r.contains(&input.name) {
-                    return Err(anyhow!("Unknown resource in input: {}", input.name));
+            Input::Memory { name, .. } => {
+                if !r.contains(name) && !self.variables.contains_key(name) {
+                    return Err(anyhow!("Unknown resource in input: {}", name));
                 }
                 Ok(false)
             }
+            Input::Expr { .. } => Ok(false),
         }
     }
 

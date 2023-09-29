@@ -1,8 +1,16 @@
+variables:
+  - name: scale
+    expr: [3, 6]
+  - name: brick_color
+    expr: '#861400e8'
 pipeline:
   - shader: brick_shape.glsl
-    inputs: []
+    inputs:
+      - src: memory
+        uniform: scale
+        name: scale
     output:
-      type: memory
+      dst: memory
       name: brick_shape
       width: 512
       height: 512
@@ -10,11 +18,17 @@ pipeline:
   - shader: brick_paint.glsl
     # debug_shader: out/debug_2.glsl
     inputs:
-      - type: memory
+      - src: memory
+        uniform: scale
+        name: scale
+      - src: memory
+        uniform: brick_color
+        name: brick_color
+      - src: memory
         name: brick_shape
         uniform: brick_shape
     output:
-      type: file
+      dst: file
       name: out/result.png
       width: 512
       height: 512

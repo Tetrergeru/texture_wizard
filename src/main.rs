@@ -78,7 +78,7 @@ fn main() {
                 err = None;
                 ctx.logs_enabled = true;
                 println!("Error resolved");
-            },
+            }
             (None, Err(e)) => {
                 println!("Error: {e:?}");
                 err = Some(e);

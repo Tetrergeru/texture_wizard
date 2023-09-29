@@ -1,32 +1,6 @@
-use std::fs;
-
 use serde::{Deserialize, Serialize};
 
-use crate::project_path::ProjectPath;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Pipeline {
-    pub pipeline: Vec<Stage>,
-}
-
-impl Pipeline {
-    pub fn load_from_file(path: &ProjectPath) -> anyhow::Result<Self> {
-        let pipeline = fs::read_to_string(path.main())?;
-        let pipeline = serde_yaml::from_str(&pipeline)?;
-        Ok(pipeline)
-    }
-
-    pub fn number_of_previews(&self) -> usize {
-        let mut res = 0;
-        for stage in self.pipeline.iter() {
-            if let Preview::Disabled = stage.output.preview {
-                continue
-            }
-            res += 1;
-        }
-        res
-    }
-}
+use super::Input;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Stage {
@@ -54,17 +28,8 @@ impl Default for Profiling {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Input {
-    #[serde(rename = "type")]
-    pub typ: IOType,
-    pub name: String,
-    pub uniform: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Output {
-    #[serde(rename = "type")]
-    pub typ: IOType,
+    pub dst: Source,
     pub name: String,
     pub width: u32,
     pub height: u32,
@@ -73,7 +38,7 @@ pub struct Output {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum IOType {
+pub enum Source {
     #[serde(rename = "file")]
     File,
     #[serde(rename = "memory")]

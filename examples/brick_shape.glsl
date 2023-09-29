@@ -11,7 +11,7 @@ in VS_OUTPUT {
 
 out vec4 Color;
 
-ivec2 scale = ivec2(3, 6);
+uniform ivec2 scale;
 
 void main() {
     vec2 pos = IN.Position.xy * scale;
