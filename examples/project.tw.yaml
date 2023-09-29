@@ -1,8 +1,6 @@
 variables:
-  - name: scale
-    expr: [3, 6]
-  - name: brick_color
-    expr: '#861400e8'
+  scale: [3, 6]
+  brick_color: '#861400e8'
 pipeline:
   - shader: brick_shape.glsl
     inputs:
