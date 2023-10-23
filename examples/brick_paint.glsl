@@ -65,6 +65,39 @@ float fractal_noise(vec2 pos, int iters) {
     return res / sum;
 }
 
+vec2 vector(ivec2 pos) {
+    float x = s_random(hash_3(pos.x, pos.y, 0));
+    float y = s_random(hash_3(pos.x, pos.y, 1)) * sqrt(1.0 - x * x);
+    return vec2(x, y) * 0.5 + vec2(0.5);
+}
+
+float magic_number(ivec2 pos) {
+    return u_random(hash_3(pos.x, pos.y, 0));
+}
+
+float voronoi(vec2 pos) {
+    ivec2 ipos = ivec2(floor(pos));
+
+    float minDist = 1.0;
+
+    vec2 minPos = ipos;
+
+    for (int i = -1; i <= 1; i++)
+    for (int j = -1; j <= 1; j++) {
+        ivec2 iposOfs = ipos + ivec2(i, j);
+        if (magic_number(iposOfs) < 0.95) continue;
+        vec2 offset = vector(iposOfs);
+
+        float dist = distance(pos, vec2(iposOfs) + offset);
+
+        minPos = minDist < dist ? minPos : iposOfs;
+        minDist = min(minDist, dist);
+    }
+    
+    return minDist;
+
+}
+
 void main() {
     vec2 pos = (IN.Position.xy + vec2(1, 1)) * 0.5;
 
@@ -73,17 +106,21 @@ void main() {
     ivec2 brick = ivec2(floor(sample.ba * 100));
 
     float thick = 0.1;
-    float sc = 2.0 * scale.y / scale.x;
+    float sc = scale.y / scale.x;
     float shape = min(sc * (1 - abs(uv.x * 2 - 1)), 1 - abs(uv.y * 2 - 1));
-    shape = max(shape, mix(shape, simple_noise_wrap(pos * 128, 128), 0.1));
-
+    shape = mix(shape, simple_noise_wrap(pos * 128, 128), 0.1);
+    
     vec3 color;
-    if (shape > 0.15) {
+    if (shape > 0.12) {
         HashSeed = hash_2(brick.x, brick.y);
-        color = brick_color * fractal_noise(uv * 4, 4);
+
+        float a = s_random(hash_1(1));
+        mat2 rot = mat2(cos(a), -sin(a), sin(a), cos(a));
+        float v = voronoi(rot * uv * vec2(2, 10));
+        color = brick_color * fractal_noise(uv * 7, 10) * v;
     } else {
         HashSeed = 1;
-        float noise = fractal_noise(pos * 64, 5) * 0.8 + 0.2;
+        float noise = fractal_noise(pos * 256, 5) * 0.7 + 0.3;
         color = vec3(1, 1, 1) * noise;
     }
 
